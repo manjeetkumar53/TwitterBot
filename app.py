@@ -3,7 +3,6 @@ import sys
 from selenium.webdriver.support import ui
 from selenium import webdriver
 from selenium.webdriver.support import expected_conditions as EC
-#from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
@@ -25,8 +24,7 @@ class TwitterBot:
         
         #email.clear()
         #password.clear()
-        empty_val   = ""
-        #bot.execute_script('document.getElementsByClassName("js-username-field")[0].value=''')
+        
         email.send_keys(self.username)
         password.send_keys(self.password)
         time.sleep(5)
