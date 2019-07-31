@@ -1,6 +1,6 @@
 # TwitterBot
 
-TwitterBot: An utility to like tweets using Hashtags. 
+Twitter Bot: Login to Twitter account & like tweets using Hashtags 
 
 ## Specifications:
 
