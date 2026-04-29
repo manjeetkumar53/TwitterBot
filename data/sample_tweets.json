@@ -1,0 +1,28 @@
+{
+  "tweets": [
+    {
+      "id": "1001",
+      "author": "ai_builder",
+      "created_at": "2026-04-29T07:00:00Z",
+      "text": "Great progress in #AI tooling today. The new agent workflow improves reliability and gives teams strong observability."
+    },
+    {
+      "id": "1002",
+      "author": "ops_lead",
+      "created_at": "2026-04-29T07:15:00Z",
+      "text": "The release had a bad outage risk at first, but the rollback plan reduced customer impact. #SRE"
+    },
+    {
+      "id": "1003",
+      "author": "ml_engineer",
+      "created_at": "2026-04-29T08:05:00Z",
+      "text": "RAG evaluation is a huge opportunity. Citation quality and faithfulness checks are the best way to prevent weak answers. #GenAI"
+    },
+    {
+      "id": "1004",
+      "author": "platform_team",
+      "created_at": "2026-04-29T09:30:00Z",
+      "text": "Slow inference and cost growth remain a problem for LLM apps. Model routing can improve latency and reduce loss."
+    }
+  ]
+}
