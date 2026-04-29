@@ -1,7 +1,7 @@
 # TwitterBot: X/Twitter Daily Intelligence Reporter
 
 ![Python](https://img.shields.io/badge/Python-3.13-3776AB?style=flat-square&logo=python&logoColor=white)
-![Selenium](https://img.shields.io/badge/Selenium-Browser%20Login%20Fallback-43B02A?style=flat-square&logo=selenium&logoColor=white)
+![Playwright](https://img.shields.io/badge/Playwright-Browser%20Login%20Fallback-2EAD33?style=flat-square&logo=playwright&logoColor=white)
 ![SQLite](https://img.shields.io/badge/Storage-SQLite-003B57?style=flat-square&logo=sqlite&logoColor=white)
 ![Focus](https://img.shields.io/badge/Focus-Social%20Listening%20%7C%20Sentiment%20Reporting-0f766e?style=flat-square)
 
@@ -25,8 +25,8 @@ This repo demonstrates a safer and more valuable direction: crawl, analyze, repo
 
 | Capability | Implementation |
 |---|---|
-| Login | Selenium opens X/Twitter login; supports manual login or env-based credentials |
-| Crawling | Official X API v2 recent search, Selenium browser search fallback, or local JSON feed |
+| Login | Playwright opens X/Twitter login; supports manual login or env-based credentials |
+| Crawling | Official X API v2 recent search, Playwright browser search fallback, or local JSON feed |
 | Sentiment | Transparent rule-based positive/neutral/negative scoring |
 | Trend extraction | Top terms, hashtags, and mentions |
 | Reporting | Markdown, HTML, and JSON daily reports |
@@ -42,7 +42,7 @@ CLI
   -> login / crawl / report / daily / watchlist / history
   -> crawler source
        -> official X API recent search
-       -> Selenium browser search fallback
+       -> Playwright browser search fallback
        -> local JSON feed for offline runs
   -> sentiment analyzer
   -> trend extraction
@@ -66,6 +66,7 @@ cd TwitterBot
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
+playwright install firefox
 ```
 
 Run the full offline pipeline:
@@ -291,7 +292,7 @@ The test suite validates:
 
 - **No click automation:** the project reports on content instead of liking/following/spamming.
 - **Official API first:** stable and appropriate for production crawling.
-- **Browser fallback:** available for manual research, isolated behind a crawler interface.
+- **Browser fallback:** available for manual research, isolated behind a crawler interface. Uses Playwright with smart waits instead of fixed sleeps.
 - **Rule-based sentiment first:** transparent, deterministic, and testable without model keys.
 - **Multiple report formats:** Markdown for docs, HTML for review, JSON for downstream systems.
 - **SQLite history:** simple persistence for trend comparison without external infrastructure.

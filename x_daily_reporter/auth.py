@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import os
-import time
 from dataclasses import dataclass
 
 
@@ -35,25 +34,24 @@ class BrowserLogin:
         )
 
     def open_login(self) -> None:
-        from selenium.webdriver.common.by import By
-        from selenium.webdriver.common.keys import Keys
+        from playwright.sync_api import sync_playwright
 
-        from x_daily_reporter.crawlers import _build_driver
+        from x_daily_reporter.crawlers import _launch_browser
 
-        driver = _build_driver(self.config.driver, self.config.headless)
-        try:
-            driver.get("https://x.com/i/flow/login")
-            time.sleep(3)
-            if self.config.username and self.config.password:
-                username_input = driver.find_element(By.CSS_SELECTOR, "input[autocomplete='username']")
-                username_input.send_keys(self.config.username)
-                username_input.send_keys(Keys.ENTER)
-                time.sleep(2)
-                password_input = driver.find_element(By.CSS_SELECTOR, "input[name='password']")
-                password_input.send_keys(self.config.password)
-                password_input.send_keys(Keys.ENTER)
-            else:
-                print("Login page opened. Complete login manually in the browser window.")
-            time.sleep(self.config.manual_timeout_seconds)
-        finally:
-            driver.quit()
+        with sync_playwright() as p:
+            browser = _launch_browser(p, self.config.driver, self.config.headless)
+            page = browser.new_page()
+            try:
+                page.goto("https://x.com/i/flow/login")
+                if self.config.username and self.config.password:
+                    page.wait_for_selector("input[autocomplete='username']", timeout=15_000)
+                    page.fill("input[autocomplete='username']", self.config.username)
+                    page.press("input[autocomplete='username']", "Enter")
+                    page.wait_for_selector("input[name='password']", timeout=10_000)
+                    page.fill("input[name='password']", self.config.password)
+                    page.press("input[name='password']", "Enter")
+                else:
+                    print("Login page opened. Complete login manually in the browser window.")
+                page.wait_for_timeout(self.config.manual_timeout_seconds * 1000)
+            finally:
+                browser.close()

@@ -3,7 +3,6 @@ from __future__ import annotations
 import json
 import os
 import re
-import time
 import urllib.parse
 import urllib.request
 from datetime import datetime, timezone
@@ -86,7 +85,7 @@ class XApiCrawler:
 
 
 class BrowserSearchCrawler:
-    """Selenium browser fallback for manually authenticated X/Twitter sessions.
+    """Playwright browser fallback for manually authenticated X/Twitter sessions.
 
     Browser automation is intentionally conservative: it opens search pages and
     reads visible tweet cards. Prefer the official API for reliable production use.
@@ -97,57 +96,54 @@ class BrowserSearchCrawler:
         self.headless = headless
 
     def crawl(self, query: str, limit: int) -> list[Tweet]:
-        from selenium import webdriver
-        from selenium.webdriver.common.by import By
+        from playwright.sync_api import sync_playwright
 
-        driver = _build_driver(self.driver_name, self.headless)
         tweets: list[Tweet] = []
-        try:
-            url = "https://x.com/search?" + urllib.parse.urlencode({"q": query, "src": "typed_query", "f": "live"})
-            driver.get(url)
-            time.sleep(4)
-            seen: set[str] = set()
-            while len(tweets) < limit:
-                articles = driver.find_elements(By.CSS_SELECTOR, "article")
-                for article in articles:
-                    text = article.text.strip()
-                    if not text or text in seen:
-                        continue
-                    seen.add(text)
-                    tweet_id = str(abs(hash(text)))
-                    tweets.append(
-                        Tweet(
-                            id=tweet_id,
-                            text=text,
-                            author=_extract_author(text),
-                            created_at=datetime.now(timezone.utc),
-                            url=None,
+        with sync_playwright() as p:
+            browser = _launch_browser(p, self.driver_name, self.headless)
+            page = browser.new_page()
+            try:
+                url = "https://x.com/search?" + urllib.parse.urlencode({"q": query, "src": "typed_query", "f": "live"})
+                page.goto(url)
+                page.wait_for_selector("article", timeout=15_000)
+                seen: set[str] = set()
+                while len(tweets) < limit:
+                    articles = page.query_selector_all("article")
+                    for article in articles:
+                        text = (article.inner_text() or "").strip()
+                        if not text or text in seen:
+                            continue
+                        seen.add(text)
+                        tweet_id = str(abs(hash(text)))
+                        tweets.append(
+                            Tweet(
+                                id=tweet_id,
+                                text=text,
+                                author=_extract_author(text),
+                                created_at=datetime.now(timezone.utc),
+                                url=None,
+                            )
                         )
-                    )
+                        if len(tweets) >= limit:
+                            break
                     if len(tweets) >= limit:
                         break
-                driver.execute_script("window.scrollTo(0, document.body.scrollHeight)")
-                time.sleep(2)
-                if len(seen) == 0:
-                    break
-        finally:
-            driver.quit()
+                    page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
+                    page.wait_for_timeout(800)
+                    if len(seen) == 0:
+                        break
+            finally:
+                browser.close()
         return tweets
 
 
-def _build_driver(driver_name: str, headless: bool):
-    from selenium import webdriver
-
-    if driver_name == "chrome":
-        options = webdriver.ChromeOptions()
-        if headless:
-            options.add_argument("--headless=new")
-        return webdriver.Chrome(options=options)
-
-    options = webdriver.FirefoxOptions()
-    if headless:
-        options.add_argument("-headless")
-    return webdriver.Firefox(options=options)
+def _launch_browser(p, driver_name: str, headless: bool):
+    """Launch a Playwright browser by name."""
+    if driver_name == "chrome" or driver_name == "chromium":
+        return p.chromium.launch(headless=headless)
+    if driver_name == "webkit":
+        return p.webkit.launch(headless=headless)
+    return p.firefox.launch(headless=headless)
 
 
 def _parse_time(value: str | None) -> datetime:
