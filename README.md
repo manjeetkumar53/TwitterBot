@@ -101,11 +101,13 @@ Optional environment variables:
 ```env
 X_USERNAME=
 X_PASSWORD=
-BROWSER_DRIVER=firefox
+BROWSER_DRIVER=firefox   # firefox | chromium | webkit
 HEADLESS=false
 ```
 
 Manual login is recommended. Never commit credentials.
+
+> Install browser binaries with `playwright install <browser>` (e.g. `playwright install chromium`).
 
 ### 2. Crawl From Official X API
 
@@ -119,15 +121,18 @@ python app.py crawl \
   --output output/tweets.json
 ```
 
-### 3. Crawl From Browser Search
+### 3. Crawl From Browser Search (Playwright)
 
 ```bash
 python app.py crawl \
   --source browser \
   --query "agentic AI" \
   --limit 30 \
+  --headless \
   --output output/tweets.json
 ```
+
+> Requires an authenticated session already saved in the browser profile, or run without `--headless` and log in manually.
 
 ### 4. Generate Reports From Existing Tweets
 
@@ -255,7 +260,7 @@ TwitterBot/
 ├── app.py
 ├── x_daily_reporter/
 │   ├── analyzer.py          # sentiment and trend extraction
-│   ├── auth.py              # Selenium login helper
+│   ├── auth.py              # Playwright login helper
 │   ├── cli.py               # command-line interface
 │   ├── config.py            # env and watchlist config
 │   ├── crawlers.py          # API, browser, and file crawlers
