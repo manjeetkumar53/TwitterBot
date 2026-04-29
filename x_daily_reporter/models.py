@@ -71,6 +71,19 @@ class DailyReport:
             counts[result.label] = counts.get(result.label, 0) + 1
         return counts
 
+    @property
+    def average_sentiment(self) -> float:
+        if not self.sentiments:
+            return 0.0
+        return round(sum(item.score for item in self.sentiments) / len(self.sentiments), 4)
+
+    @property
+    def dominant_sentiment(self) -> str:
+        distribution = self.distribution
+        if sum(distribution.values()) == 0:
+            return "neutral"
+        return max(distribution, key=lambda label: distribution[label])
+
 
 def _parse_datetime(value: str) -> datetime:
     normalized = value.replace("Z", "+00:00")

@@ -1,54 +1,61 @@
-# TwitterBot: X/Twitter Daily Sentiment Reporter
+# TwitterBot: X/Twitter Daily Intelligence Reporter
 
 ![Python](https://img.shields.io/badge/Python-3.13-3776AB?style=flat-square&logo=python&logoColor=white)
-![Selenium](https://img.shields.io/badge/Selenium-Browser%20Automation-43B02A?style=flat-square&logo=selenium&logoColor=white)
+![Selenium](https://img.shields.io/badge/Selenium-Browser%20Login%20Fallback-43B02A?style=flat-square&logo=selenium&logoColor=white)
+![SQLite](https://img.shields.io/badge/Storage-SQLite-003B57?style=flat-square&logo=sqlite&logoColor=white)
 ![Focus](https://img.shields.io/badge/Focus-Social%20Listening%20%7C%20Sentiment%20Reporting-0f766e?style=flat-square)
 
-Production-style social listening toolkit for X/Twitter: authenticate through browser when needed, crawl daily feeds through the official API or browser fallback, analyze tweet sentiment, extract trends, and generate Markdown/JSON reports.
+TwitterBot is a production-style X/Twitter social listening toolkit. It can authenticate through a browser, crawl daily feeds through the official X API or a browser fallback, analyze sentiment, extract trends, persist history, and generate Markdown, HTML, and JSON reports.
 
-This revamps the original 2019 “login and like tweets” script into a safer and more useful reporting system.
+This is a complete rewrite of the original 2019 “login and like tweets” script. The new version focuses on daily intelligence reporting instead of click automation.
 
-## Why This Exists
+## Why This Repo Matters
 
-Most social media bots automate clicks. This project focuses on something more valuable for engineering and business teams: daily feed intelligence.
-
-It helps answer:
+Social media automation projects often stop at browser scripting. A more useful system answers operational questions:
 
 - What are people saying about a topic today?
-- Is the daily conversation positive, neutral, or negative?
-- Which terms, hashtags, and mentions are trending?
-- Which tweets should be reviewed manually?
-- Can a daily report be generated automatically from crawled feeds?
+- Is the conversation positive, neutral, or negative?
+- Which hashtags, mentions, and terms are trending?
+- Which tweets should be reviewed by a human?
+- Can daily reports be persisted and compared over time?
 
-## Capabilities
+This repo demonstrates a safer and more valuable direction: crawl, analyze, report, and retain evidence.
+
+## What It Does
 
 | Capability | Implementation |
 |---|---|
 | Login | Selenium opens X/Twitter login; supports manual login or env-based credentials |
-| Crawler | Official X API v2 recent search, browser search fallback, or local JSON input |
-| Sentiment analysis | Rule-based positive/negative scoring with explainable terms |
+| Crawling | Official X API v2 recent search, Selenium browser search fallback, or local JSON feed |
+| Sentiment | Transparent rule-based positive/neutral/negative scoring |
 | Trend extraction | Top terms, hashtags, and mentions |
-| Reporting | Markdown and JSON daily reports |
-| CLI workflows | `login`, `crawl`, `report`, and `daily` commands |
-| Testing | Unit tests for sentiment and report generation |
+| Reporting | Markdown, HTML, and JSON daily reports |
+| Persistence | SQLite report history with tweet-level sentiment records |
+| Watchlists | Run multiple configured topics in one command |
+| CLI | `login`, `crawl`, `report`, `daily`, `watchlist`, and `history` commands |
+| Tests | Offline test suite with no API keys required |
 
 ## Architecture
 
 ```text
 CLI
-  -> login / crawl / report / daily
+  -> login / crawl / report / daily / watchlist / history
   -> crawler source
-       -> X API v2 recent search
+       -> official X API recent search
        -> Selenium browser search fallback
-       -> local JSON feed for offline testing
+       -> local JSON feed for offline runs
   -> sentiment analyzer
   -> trend extraction
-  -> Markdown + JSON daily report
+  -> report writers
+       -> Markdown
+       -> HTML
+       -> JSON
+  -> SQLite history store
 ```
 
 ## Responsible Use
 
-Prefer the official X API for reliable and compliant crawling. Browser automation is provided as a fallback for manually authenticated sessions and should be used conservatively. Do not use this project to spam, mass-like, evade platform limits, or bypass access controls.
+Prefer the official X API for production crawling. Browser automation is intended for manually authenticated research workflows and should be used conservatively. Do not use this project for spam, mass engagement, credential abuse, platform-limit evasion, or access-control bypassing.
 
 ## Quick Start
 
@@ -61,26 +68,34 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-Run the full offline demo using sample tweets:
+Run the full offline pipeline:
 
 ```bash
-python app.py daily --query "#AI" --source file \
+python app.py daily \
+  --query "#AI" \
+  --source file \
   --input data/sample_tweets.json \
-  --markdown reports/daily-report.md \
-  --json reports/daily-report.json
+  --markdown reports/ai-daily.md \
+  --html reports/ai-daily.html \
+  --json reports/ai-daily.json
 ```
 
-Open `reports/daily-report.md` to review the generated report.
+View:
 
-## CLI Usage
+- `reports/ai-daily.md` for a readable Markdown report
+- `reports/ai-daily.html` for a browser-friendly report
+- `reports/ai-daily.json` for machine-readable output
+- `data/twitterbot.sqlite3` for persisted report history
 
-### Open Browser Login
+## CLI Workflows
+
+### 1. Login
 
 ```bash
 python app.py login
 ```
 
-Optional env vars:
+Optional environment variables:
 
 ```env
 X_USERNAME=
@@ -89,9 +104,9 @@ BROWSER_DRIVER=firefox
 HEADLESS=false
 ```
 
-Manual login is recommended. Do not commit credentials.
+Manual login is recommended. Never commit credentials.
 
-### Crawl From Official X API
+### 2. Crawl From Official X API
 
 ```bash
 export X_BEARER_TOKEN="..."
@@ -103,7 +118,7 @@ python app.py crawl \
   --output output/tweets.json
 ```
 
-### Crawl From Browser Search
+### 3. Crawl From Browser Search
 
 ```bash
 python app.py crawl \
@@ -113,44 +128,68 @@ python app.py crawl \
   --output output/tweets.json
 ```
 
-### Generate Report From Crawled Tweets
+### 4. Generate Reports From Existing Tweets
 
 ```bash
 python app.py report \
   --query "agentic AI" \
   --input output/tweets.json \
-  --markdown reports/daily-report.md \
-  --json reports/daily-report.json
+  --markdown reports/agentic-ai.md \
+  --html reports/agentic-ai.html \
+  --json reports/agentic-ai.json
 ```
 
-### Daily One-Command Workflow
+### 5. Run Daily Crawl + Analyze + Persist
 
 ```bash
 python app.py daily \
   --source api \
-  --query "agentic AI lang:en -is:retweet" \
+  --query "RAG evaluation lang:en -is:retweet" \
   --limit 50 \
-  --markdown reports/agentic-ai-daily.md \
-  --json reports/agentic-ai-daily.json
+  --markdown reports/rag-eval.md \
+  --html reports/rag-eval.html \
+  --json reports/rag-eval.json
 ```
 
-## Report Output
+### 6. Run A Watchlist
 
-The Markdown report includes:
+```bash
+python app.py watchlist \
+  --config config/watchlist.json \
+  --source api \
+  --reports-dir reports
+```
+
+### 7. View Persisted History
+
+```bash
+python app.py history --limit 10
+```
+
+Example output:
+
+```text
+   3 | 2026-04-29T08:30:00+00:00 | RAG evaluation lang:en -is:retweet | total=50 dominant=positive avg=0.18
+```
+
+## Report Contents
+
+Each daily report includes:
 
 - generated timestamp
-- tweet count
+- query
+- total tweets analyzed
 - positive / neutral / negative distribution
+- average sentiment score
+- dominant sentiment
 - top terms
 - top hashtags
 - top mentions
 - tweet-level sentiment table
 
-The JSON report includes the same summary plus raw tweet records and sentiment scores for downstream analysis.
+## Data Model
 
-## Data Format
-
-Crawler output is stored as:
+Crawler output:
 
 ```json
 {
@@ -170,23 +209,65 @@ Crawler output is stored as:
 }
 ```
 
+SQLite tables:
+
+| Table | Purpose |
+|---|---|
+| `report_runs` | One row per generated report with summary metrics |
+| `report_tweets` | Tweet-level sentiment records for each report run |
+
+## Configuration
+
+`.env.example`:
+
+```env
+X_BEARER_TOKEN=
+X_USERNAME=
+X_PASSWORD=
+BROWSER_DRIVER=firefox
+HEADLESS=false
+
+TWITTERBOT_SOURCE=file
+TWITTERBOT_INPUT=data/sample_tweets.json
+TWITTERBOT_DB=data/twitterbot.sqlite3
+TWITTERBOT_REPORTS_DIR=reports
+```
+
+Watchlist config:
+
+```json
+{
+  "topics": [
+    {
+      "name": "agentic-ai",
+      "query": "agentic AI lang:en -is:retweet",
+      "limit": 50
+    }
+  ]
+}
+```
+
 ## Project Structure
 
 ```text
 TwitterBot/
-├── app.py                         # CLI entrypoint
+├── app.py
 ├── x_daily_reporter/
-│   ├── analyzer.py                # sentiment + trend extraction
-│   ├── auth.py                    # Selenium login helper
-│   ├── cli.py                     # command-line interface
-│   ├── crawlers.py                # API, browser, and file crawlers
-│   ├── models.py                  # Tweet/report dataclasses
-│   └── reporter.py                # Markdown and JSON report writers
+│   ├── analyzer.py          # sentiment and trend extraction
+│   ├── auth.py              # Selenium login helper
+│   ├── cli.py               # command-line interface
+│   ├── config.py            # env and watchlist config
+│   ├── crawlers.py          # API, browser, and file crawlers
+│   ├── models.py            # dataclasses
+│   ├── pipeline.py          # daily crawl/analyze/report pipeline
+│   ├── reporter.py          # Markdown, HTML, JSON writers
+│   └── storage.py           # SQLite report history
+├── config/
+│   └── watchlist.json
 ├── data/
 │   └── sample_tweets.json
 ├── tests/
 ├── requirements.txt
-├── .env.example
 └── README.md
 ```
 
@@ -195,24 +276,35 @@ TwitterBot/
 ```bash
 pytest -q
 python app.py daily --query "#AI" --source file --input data/sample_tweets.json
+python app.py history
 ```
+
+The test suite validates:
+
+- sentiment labels and scoring
+- hashtag and mention extraction
+- Markdown, HTML, and JSON report generation
+- daily pipeline execution
+- SQLite report persistence
 
 ## Design Decisions
 
-- **Official API first:** most reliable and appropriate path for production crawling.
-- **Browser fallback:** useful for manual research workflows, but intentionally conservative.
-- **Rule-based sentiment:** transparent, deterministic, and testable without external AI services.
-- **Markdown + JSON reports:** human-readable summary and machine-readable output.
-- **Offline sample mode:** contributors can test the full workflow without API keys.
+- **No click automation:** the project reports on content instead of liking/following/spamming.
+- **Official API first:** stable and appropriate for production crawling.
+- **Browser fallback:** available for manual research, isolated behind a crawler interface.
+- **Rule-based sentiment first:** transparent, deterministic, and testable without model keys.
+- **Multiple report formats:** Markdown for docs, HTML for review, JSON for downstream systems.
+- **SQLite history:** simple persistence for trend comparison without external infrastructure.
+- **Offline mode:** the full pipeline runs locally with sample data.
 
 ## Production Hardening Backlog
 
-- Add scheduled daily runs through GitHub Actions or cron
-- Add pluggable LLM-based sentiment classifier
+- Add scheduled daily execution through GitHub Actions or cron
+- Add optional LLM sentiment classifier behind the same analyzer contract
 - Add topic clustering and entity extraction
-- Add time-series report history
-- Add dashboard for sentiment trend comparison
-- Store crawled feeds in SQLite or Postgres
+- Add dashboard for trend history
+- Add Slack/email report delivery
+- Add Postgres storage option for team use
 
 ## License
 

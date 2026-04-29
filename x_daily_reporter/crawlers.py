@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import time
 import urllib.parse
 import urllib.request
@@ -25,8 +26,13 @@ class FileCrawler:
         payload = json.loads(self.path.read_text(encoding="utf-8"))
         tweets = [Tweet.from_dict(item) for item in payload.get("tweets", payload)]
         if query:
-            query_lower = query.lower().lstrip("#")
-            tweets = [tweet for tweet in tweets if query_lower in tweet.text.lower()]
+            terms = _offline_query_terms(query)
+            if terms:
+                tweets = [
+                    tweet
+                    for tweet in tweets
+                    if any(term in tweet.text.lower() for term in terms)
+                ]
         return tweets[:limit]
 
 
@@ -158,3 +164,13 @@ def _extract_author(text: str) -> str:
         if line.startswith("@"):
             return line.lstrip("@")
     return "unknown"
+
+
+def _offline_query_terms(query: str) -> list[str]:
+    ignored = {"and", "en", "is", "lang", "or", "retweet"}
+    terms: list[str] = []
+    for token in re.findall(r"[#@]?[A-Za-z0-9_]+", query.lower()):
+        cleaned = token.lstrip("#@")
+        if cleaned and cleaned not in ignored:
+            terms.append(cleaned)
+    return terms

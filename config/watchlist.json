@@ -1,0 +1,19 @@
+{
+  "topics": [
+    {
+      "name": "agentic-ai",
+      "query": "agentic AI lang:en -is:retweet",
+      "limit": 50
+    },
+    {
+      "name": "rag-evaluation",
+      "query": "RAG evaluation lang:en -is:retweet",
+      "limit": 50
+    },
+    {
+      "name": "llm-routing",
+      "query": "LLM routing cost optimization lang:en -is:retweet",
+      "limit": 50
+    }
+  ]
+}
