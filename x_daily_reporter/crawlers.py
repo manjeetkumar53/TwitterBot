@@ -84,6 +84,56 @@ class XApiCrawler:
         return tweets[:limit]
 
 
+class XquikCrawler:
+    """Xquik recent-search crawler.
+
+    Requires XQUIK_API_KEY. This keeps the same Tweet model used by the
+    existing reporter pipeline while avoiding browser automation.
+    """
+
+    def __init__(self, api_key: str | None = None) -> None:
+        self.api_key = api_key or os.getenv("XQUIK_API_KEY")
+        if not self.api_key:
+            raise ValueError("XQUIK_API_KEY is required for Xquik crawling")
+
+    def crawl(self, query: str, limit: int) -> list[Tweet]:
+        params = {
+            "q": query,
+            "queryType": "Latest",
+            "limit": str(max(1, min(limit, 200))),
+        }
+        url = "https://xquik.com/api/v1/x/tweets/search?" + urllib.parse.urlencode(params)
+        request = urllib.request.Request(
+            url,
+            headers={"accept": "application/json", "x-api-key": self.api_key},
+        )
+        with urllib.request.urlopen(request, timeout=30) as response:
+            payload = json.loads(response.read().decode("utf-8"))
+
+        tweets: list[Tweet] = []
+        for item in payload.get("tweets", []):
+            tweet_id = str(item.get("id") or "")
+            text = str(item.get("text") or "")
+            author_payload = item.get("author") or {}
+            author = (
+                str(author_payload.get("username") or "unknown")
+                if isinstance(author_payload, dict)
+                else "unknown"
+            )
+            metrics = _xquik_metrics(item)
+            tweets.append(
+                Tweet(
+                    id=tweet_id,
+                    text=text,
+                    author=author,
+                    created_at=_parse_time(item.get("createdAt")),
+                    url=f"https://x.com/{author}/status/{tweet_id}" if tweet_id and author != "unknown" else None,
+                    metrics=metrics,
+                )
+            )
+        return tweets[:limit]
+
+
 class BrowserSearchCrawler:
     """Playwright browser fallback for manually authenticated X/Twitter sessions.
 
@@ -160,6 +210,22 @@ def _extract_author(text: str) -> str:
         if line.startswith("@"):
             return line.lstrip("@")
     return "unknown"
+
+
+def _xquik_metrics(item: dict) -> dict[str, int]:
+    fields = {
+        "like_count": "likeCount",
+        "quote_count": "quoteCount",
+        "reply_count": "replyCount",
+        "retweet_count": "retweetCount",
+        "view_count": "viewCount",
+    }
+    metrics: dict[str, int] = {}
+    for metric_name, payload_name in fields.items():
+        value = item.get(payload_name)
+        if isinstance(value, int):
+            metrics[metric_name] = value
+    return metrics
 
 
 def _offline_query_terms(query: str) -> list[str]:

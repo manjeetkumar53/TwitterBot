@@ -22,10 +22,10 @@ def main() -> int:
 
     subcommands.add_parser("login", help="Open browser login for X/Twitter")
 
-    crawl = subcommands.add_parser("crawl", help="Crawl tweets from API, browser, or file")
+    crawl = subcommands.add_parser("crawl", help="Crawl tweets from API, Xquik, browser, or file")
     crawl.add_argument("--query", required=True)
     crawl.add_argument("--limit", type=int, default=50)
-    crawl.add_argument("--source", choices=["api", "browser", "file"], default=config.source)
+    crawl.add_argument("--source", choices=["api", "xquik", "browser", "file"], default=config.source)
     crawl.add_argument("--input", type=Path, default=config.default_input)
     crawl.add_argument("--output", type=Path, default=Path("output/tweets.json"))
     crawl.add_argument("--headless", action="store_true")
@@ -42,7 +42,7 @@ def main() -> int:
     daily = subcommands.add_parser("daily", help="Crawl and report in one command")
     daily.add_argument("--query", required=True)
     daily.add_argument("--limit", type=int, default=50)
-    daily.add_argument("--source", choices=["api", "browser", "file"], default=config.source)
+    daily.add_argument("--source", choices=["api", "xquik", "browser", "file"], default=config.source)
     daily.add_argument("--input", type=Path, default=config.default_input)
     daily.add_argument("--markdown", type=Path, default=config.reports_dir / "daily-report.md")
     daily.add_argument("--json", type=Path, default=config.reports_dir / "daily-report.json")
@@ -53,7 +53,7 @@ def main() -> int:
 
     watchlist = subcommands.add_parser("watchlist", help="Run daily reports for every topic in a JSON watchlist")
     watchlist.add_argument("--config", type=Path, default=Path("config/watchlist.json"))
-    watchlist.add_argument("--source", choices=["api", "browser", "file"], default=config.source)
+    watchlist.add_argument("--source", choices=["api", "xquik", "browser", "file"], default=config.source)
     watchlist.add_argument("--input", type=Path, default=config.default_input)
     watchlist.add_argument("--reports-dir", type=Path, default=config.reports_dir)
     watchlist.add_argument("--db", type=Path, default=config.database_path)
