@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
-from x_daily_reporter.crawlers import BrowserSearchCrawler, FileCrawler, XApiCrawler
+from x_daily_reporter.crawlers import BrowserSearchCrawler, FileCrawler, XApiCrawler, XquikCrawler
 from x_daily_reporter.models import DailyReport, Tweet
 from x_daily_reporter.reporter import build_report, write_html, write_json, write_markdown
 from x_daily_reporter.storage import SQLiteReportStore
@@ -25,6 +25,8 @@ class DailyFeedPipeline:
     def crawl(self, *, source: str, query: str, limit: int, input_path: Path, headless: bool = False) -> list[Tweet]:
         if source == "api":
             return XApiCrawler().crawl(query, limit)
+        if source == "xquik":
+            return XquikCrawler().crawl(query, limit)
         if source == "browser":
             return BrowserSearchCrawler(headless=headless).crawl(query, limit)
         return FileCrawler(input_path).crawl(query, limit)
